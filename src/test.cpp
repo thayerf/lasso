@@ -6,18 +6,26 @@
 #include "catch.hpp"
 namespace arma{
 TEST_CASE("test", "[test]") {
+  ///Initialize a column vector Y from our data.
   colvec Y;
   Y.load("Y.txt");
+  ///Initialize a matrix X from our data.
   mat X;
   X.load("X.txt");
-  double t= .5;
+  ///Choose arbitrary step size.
+  double t= .1;
+  ///Initial guess of 1 for all beta's
   colvec beta(1000,1);
   beta.fill(1);
+  ///Initialize 1 (for now) lambda value.
   colvec lambda(1,1);
   lambda.fill(1);
+  ///Create GGD object.
   GGD test= GGD(X,Y,beta,lambda,t);
+  ///Test Lmax Calculation.
   cout<<test.CalcLmax(test.x_,test.y_)<<endl;
-  //test= test.lasso(test);
+  ///Test single lasso iteration.
+  test= test.lasso(test);
 
 }
 }

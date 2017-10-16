@@ -41,20 +41,24 @@ double CalcLmax(mat x, colvec y){
 }
 
 GGD lasso(GGD k){
-  GGD k1= GGD(k.x_,k.y_,k.b_,k.lambda_,k.t_);
-  k1.b_=k.x_*k1.b_;
-  k1.b_*=-1;
-  k1.b_+=k.y_;
-  k1.b_=k.x_.t()*k1.b_;
-  k1.b_*=k.t_;
-  k1.b_+=k.b_;
-  for(unsigned int i=0;i<k1.b_.size();i++){
-    k1.b_(i)=soft_threshold(k1.b_(i),k1.lambda_(0));
+///TODO: Fix this. Diverges.
+  colvec temp;
+  temp=k.x_*k.b_;
+  temp=k.y_-temp;
+  temp= k.x_.t()*temp;
+  temp*=k.t_;
+  temp+=k.b_;
+  std::cout<<norm(temp,1)<<std::endl;
+  for(unsigned int i=0;i<temp.size();i++){
+    temp(i)=soft_threshold(temp(i),k.t_*k.lambda_(0));
   }
-  if(std::abs(norm(k1.b_,1)-norm(k.b_,1)) <.02) {
-  return k1;}
-  else k1=lasso(k1);
-  return k1;
+  if(std::abs(norm(temp,1)-norm(k.b_,1)) <.02) {
+  k.b_=temp;
+  return k;}
+  else{
+  k.b_=temp;
+  k=lasso(k);
+  }
 }
 double pred_error(GGD k){
   colvec t= k.x_*k.b_;
