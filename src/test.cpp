@@ -13,7 +13,7 @@ TEST_CASE("test", "[test]") {
   mat X;
   X.load("X.txt");
   ///Choose arbitrary step size.
-  double t= .1;
+  double t= .01;
   ///Initial guess of 1 for all beta's
   colvec beta(1000,1);
   beta.fill(1);
