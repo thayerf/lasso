@@ -13,7 +13,7 @@ TEST_CASE("test", "[test]") {
   mat X;
   X.load("X.txt");
   /// Choose arbitrary step size.
-  double t = .01;
+  double t = .1;
   /// Initial guess of 1 for all beta's
   colvec beta(1000, 1);
   beta.fill(1);
@@ -26,5 +26,6 @@ TEST_CASE("test", "[test]") {
   cout << test.CalcLmax(test.x_, test.y_) << endl;
   /// Test single lasso iteration.
   test = test.lasso(test);
+  cout<<test.b_[0]<<","<<test.b_[1]<<","<<test.b_[2]<<endl;
 }
 }

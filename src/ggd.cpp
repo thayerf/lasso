@@ -55,30 +55,22 @@ class GGD {
   GGD lasso(GGD k) {
     /// @TODO: Fix this. Diverges.
 
-    /// We want b= b+t*x'(y-xb)
+    /// We want b= b+(t/N)x'(y-xb)
     colvec update;
-    /// This is xb
-    update = k.x_ * k.b_;
-    update.print();
-    /// y-xb
-    update = k.y_ - update;
-    /// x'(y-xb)
-    update = k.x_.t() * update;
-    /// tx'(y-xb)
-    update *= k.t_;
-    /// b+tx'(y-xb)
-    update += k.b_;
-    /// norm is diverging
-    // std::cout<<norm(update,1)<<std::endl;
+    update = k.b_+(k.t_)*k.x_.t()*(k.y_-(1/k.b_.size())*(k.x_ * k.b_));
+
     for (unsigned int i = 0; i < update.size(); i++) {
       update(i) = soft_threshold(update(i), k.t_ * k.lambda_(0));
     }
-    if (std::abs(norm(update, 1) - norm(k.b_, 1)) < .02) {
+    cout<<update[0]<<","<<update[1]<<","<<update[2]<<endl;
+    cout<<std::abs(norm(update, 1) - norm(k.b_, 1))<<endl;
+    if (std::abs(norm(update, 1) - norm(k.b_, 1)) < .2) {
       k.b_ = update;
       return k;
     } else {
       k.b_ = update;
       k = lasso(k);
+      return k;
     }
   }
   /// @brief Calculates prediction error on itself (for now)
