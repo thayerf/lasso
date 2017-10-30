@@ -3,7 +3,7 @@
 #include <armadillo>
 #include <iostream>
 #include "catch.hpp"
-#include "ggd.cpp"
+#include "partition.cpp"
 namespace arma {
 TEST_CASE("test", "[test]") {
   /// Initialize a column vector Y from our data.
@@ -13,19 +13,20 @@ TEST_CASE("test", "[test]") {
   mat X;
   X.load("X.txt");
   /// Choose arbitrary step size.
-  double t = .1;
+  double t = .05;
   /// Initial guess of 1 for all beta's
   colvec beta(1000, 1);
-  beta.fill(1);
+  beta.fill(0);
   /// Initialize 1 (for now) lambda value.
   colvec lambda(1, 1);
-  lambda.fill(1);
+  lambda.fill(.05);
   /// Create GGD object.
-  GGD test = GGD(X, Y, beta, lambda, t);
-  /// Test Lmax Calculation.
-  cout << test.CalcLmax(test.x_, test.y_) << endl;
-  /// Test single lasso iteration.
-  test = test.lasso(test);
-  cout<<test.b_[0]<<","<<test.b_[1]<<","<<test.b_[2]<<endl;
+  Partition test = Partition(X,Y,beta,t,2);
+  beta=test.PartitionCycle();
+  cout<<beta(0)<<endl;
+  cout<<beta(1)<<endl;
+  cout<<beta(2)<<endl;
+  std::setprecision(3);
+  beta.save("betahat.txt",arma_ascii);
 }
 }
