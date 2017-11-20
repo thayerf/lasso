@@ -3,21 +3,25 @@
 
 #include <armadillo>
 #include <iostream>
-#include "optimize.hpp"
+#include "fit.hpp"
 using namespace arma;
-class Partition{
+class CV{
  private:
  int partition_counter_;
  int partition_size_;
  public:
   mat x_;
+  int k_;
   colvec y_;
   colvec b_;
-  Optimize opt;
+  Fit opt;
+  colvec lambda_;
   mat results_;
-  Partition(mat x, colvec y, int k);
+  CV(mat x, colvec y, int k);
+  CV(mat x, colvec y, int k,colvec lambda);
   void IteratePartition();
-  colvec PartitionCycle();
+  void PartitionCycle();
+  double ReturnBestLambda();
   double CalcLmax(mat x, colvec y);
 };
 

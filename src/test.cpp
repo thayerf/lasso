@@ -3,22 +3,26 @@
 #include <armadillo>
 #include <iostream>
 #include "catch.hpp"
-#include "partition.hpp"
+#include "cv.hpp"
+#include "fit.hpp"
 namespace arma {
-TEST_CASE("test", "[test]") {
-  /// Initialize a column vector Y from our data.
+TEST_CASE("recovery", "[recorvery]") {
+  /// Initialize a column vector Y from our data. Test data has n=30, p=40, s=2, seed=1408.
+  /// See datagen.r for more info.
   colvec Y;
   Y.load("Y.txt");
   /// Initialize a matrix X from our data.
   mat X;
   X.load("X.txt");
   /// Create GGD object.
-  Partition test = Partition(X,Y,5);
-  colvec beta=test.PartitionCycle();
-  cout<<beta(0)<<endl;
-  cout<<beta(1)<<endl;
-  cout<<beta(2)<<endl;
-  std::setprecision(3);
-  beta.save("betahat.txt",arma_ascii);
+  CV test = CV(X,Y,5);
+  test.PartitionCycle();
+
+  ///Ensure recoverable beta value is nonzero.
+  double l=test.ReturnBestLambda();
+  colvec betahat= test.opt.l2ggd(test.x_,test.y_,l);
+  REQUIRE(betahat(1)>.1);
+  ///Recovers approximate lambda value from glmnet.
+  REQUIRE(l-0.4112781<.1);
 }
 }
