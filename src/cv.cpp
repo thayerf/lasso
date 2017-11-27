@@ -11,10 +11,10 @@ using namespace arma;
 /// Column vector of response data. (p)
 /// @param[in] k
 /// Number of groups in partition.
-CV::CV(mat x, colvec y, int k) : x_(x), y_(y) {
+CV::CV(mat x, colvec y, int k, std::string loss_type) : x_(x), y_(y) {
   double lmax = CalcLmax(x_, y_);
   lambda_ = linspace<vec>(lmax, lmax / 20, 100);
-  opt.SetParams("l2");
+  opt.SetParams(loss_type);
   partition_counter_ = 0;
   partition_size_ = x_.n_rows / k;
   k_ = k;
@@ -30,10 +30,13 @@ CV::CV(mat x, colvec y, int k) : x_(x), y_(y) {
 /// Number of groups in partition.
 /// @param[in] lambda
 /// Prespecified lambda value.
-CV::CV(mat x, colvec y, int k, colvec lambda) : x_(x), y_(y) {
+/// @param[in] loss_type
+/// Type of loss.
+CV::CV(mat x, colvec y, int k, colvec lambda, std::string loss_type)
+    : x_(x), y_(y) {
   double lmax = CalcLmax(x_, y_);
   colvec lambda_ = lambda;
-  opt.SetParams("l2");
+  opt.SetParams(loss_type);
   partition_counter_ = 0;
   partition_size_ = x_.n_rows / k;
   results_ = mat(100, k);

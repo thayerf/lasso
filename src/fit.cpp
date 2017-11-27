@@ -26,8 +26,7 @@ mat Fit::l2ggd(mat x, colvec y, colvec lambda) {
   for (int j = 0; j < lambda.size(); j++) {
     do {
       b = update;
-      double t = step_size(b, x, y, lambda(j));
-      update = l2ggdupdate(x, y, b, lambda(j), t);
+      update = fit(x, y, b, lambda(j));
     } while (norm(update - b) > 1e-5);
     results.row(j) = b.t();
   }
@@ -41,42 +40,73 @@ mat Fit::l2ggd(mat x, colvec y, colvec lambda) {
 ///@param[in] lambda
 /// Single lambda value to use
 ///@return Vector containing beta values.
-colvec Fit::l2ggd(mat x, colvec y, double lambda) {
+colvec Fit::ggd(mat x, colvec y, double lambda) {
   colvec b;
   b = colvec(x.n_cols, 1);
   b.fill(0);
   colvec update = b;
   do {
     b = update;
-    double t = step_size(b, x, y, lambda);
-    update = l2ggdupdate(x, y, b, lambda, t);
+    update = fit(x, y, b, lambda);
   } while (norm(update - b) > 1e-5);
   return b;
 }
-colvec Fit::l2ggdupdate(mat x, colvec y, colvec b, double lambda, double t) {
-  colvec update;
-  update = Fit::soft_threshold(b + (t) * (x.t() / x.n_rows) * (y - (x * b)),
-                               t * lambda);
-  return update;
-}
 
-double Fit::step_size(colvec b, mat x, colvec y, double lambda) {
+colvec Fit::l2grad(mat x, colvec y, colvec b) {
+  return (x.t() / x.n_rows) * (y - (x * b));
+}
+double Fit::l2loss(mat x, colvec y, colvec b) {
+  double n = x.n_rows;
+  return (1 / n) * norm(y - x * b, 2) * norm(y - x * b, 2);
+}
+colvec Fit::loggrad(mat x, colvec y, colvec b) {}
+
+double Fit::logloss(mat x, colvec y, colvec b) {}
+
+/// @brief Backtracking line search step iteration.
+///@param[in] x
+/// Covariate matrix
+///@param[in] y
+/// Outcome Vector
+///@param[in] b
+/// Beta values from precios step.
+///@param[in] lambda
+/// Single lambda value to use
+///@returns Fitted beta values for next step.
+colvec Fit::fit(mat x, colvec y, colvec b, double lambda) {
   double t = 2.0;
-  double update;
-  double oldupdate =
-      .5 * norm(y - x * b) * norm(y - x * b) + lambda * norm(b, 1);
-  double realoldupdate;
-  do {
-    t *= .5;
-    update = .5 * norm(y - (x * l2ggdupdate(x, y, b, lambda, t))) *
-                 norm(y - (x * l2ggdupdate(x, y, b, lambda, t))) +
-             lambda * norm(l2ggdupdate(x, y, b, lambda, t), 1);
-    realoldupdate = oldupdate -
-                    .5 * t *
-                        norm((1 / t) * (b - l2ggdupdate(x, y, b, lambda, t))) *
-                        norm((1 / t) * (b - l2ggdupdate(x, y, b, lambda, t)));
-  } while (update > oldupdate);
-  return t;
+  double prox;
+  double actual;
+  double loss;
+  colvec bnew;
+  colvec grad;
+  if (loss_type_ == "log") {
+    grad = loggrad(x, y, b);
+    loss = logloss(x, y, b);
+    do {
+      t *= .5;
+      bnew = Fit::soft_threshold(b + (t)*grad, t * lambda);
+
+      prox = loss + as_scalar(grad.t() * (bnew - b)) +
+             (1 / (2 * t)) * (norm(bnew - b, 2) * norm(bnew - b, 2));
+      actual = logloss(x, y, bnew);
+    } while (actual > prox);
+  } else if (loss_type_ == "l2") {
+    colvec grad = l2grad(x, y, b);
+    double loss = l2loss(x, y, b);
+    do {
+      t *= .5;
+      bnew = Fit::soft_threshold(b + (t)*grad, t * lambda);
+
+      prox = loss + as_scalar(grad.t() * (bnew - b)) +
+             (1 / (2 * t)) * (norm(bnew - b, 2) * norm(bnew - b, 2));
+      actual = l2loss(x, y, bnew);
+    } while (actual > prox);
+  } else {
+    throw std::runtime_error("Loss not supported.");
+  }
+
+  return bnew;
 }
 ///@brief Soft threshold function
 colvec Fit::soft_threshold(colvec x, double lambda) {

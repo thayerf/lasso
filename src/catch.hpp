@@ -5975,7 +5975,7 @@ struct FatalConditionHandler {
 }  // namespace Catch
 
 #else  // Not Windows - assumed to be POSIX compatible
-       // //////////////////////////
+// //////////////////////////
 
 #include <signal.h>
 

@@ -18,8 +18,8 @@ class CV {
   Fit opt;
   colvec lambda_;
   mat results_;
-  CV(mat x, colvec y, int k);
-  CV(mat x, colvec y, int k, colvec lambda);
+  CV(mat x, colvec y, int k, colvec lambda, std::string loss_type);
+  CV(mat x, colvec y, int k, std::string loss_type);
   void IteratePartition();
   void PartitionCycle();
   double ReturnBestLambda();

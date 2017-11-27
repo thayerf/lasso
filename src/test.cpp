@@ -16,12 +16,12 @@ TEST_CASE("recovery", "[recorvery]") {
   mat X;
   X.load("X.txt");
   /// Create GGD object.
-  CV test = CV(X, Y, 5);
+  CV test = CV(X, Y, 5, "l2");
   test.PartitionCycle();
 
   /// Ensure recoverable beta value is nonzero.
   double l = test.ReturnBestLambda();
-  colvec betahat = test.opt.l2ggd(test.x_, test.y_, l);
+  colvec betahat = test.opt.ggd(test.x_, test.y_, l);
   REQUIRE(betahat(1) > .1);
   /// Recovers approximate lambda value from glmnet.
   REQUIRE(l - 0.4112781 < .1);
