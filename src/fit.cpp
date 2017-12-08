@@ -1,4 +1,5 @@
 #include "fit.hpp"
+#include <math.h>
 #include <armadillo>
 #include <iostream>
 #include <map>
@@ -15,7 +16,7 @@ void Fit::SetParams(std::string loss_type) { loss_type_ = loss_type; }
 ///@param[in] lambda
 /// Vector of lambda values to use
 ///@return Matrix containing beta values for all lambda values.
-mat Fit::l2ggd(mat x, colvec y, colvec lambda) {
+mat Fit::ggd(mat x, colvec y, colvec lambda) {
   mat results;
   colvec b;
   b = colvec(x.n_cols, 1);
@@ -27,7 +28,7 @@ mat Fit::l2ggd(mat x, colvec y, colvec lambda) {
     do {
       b = update;
       update = fit(x, y, b, lambda(j));
-    } while (norm(update - b) > 1e-5);
+    } while (norm(update - b) > 1e-10);
     results.row(j) = b.t();
   }
   return results;
@@ -48,20 +49,41 @@ colvec Fit::ggd(mat x, colvec y, double lambda) {
   do {
     b = update;
     update = fit(x, y, b, lambda);
-  } while (norm(update - b) > 1e-5);
+  } while (norm(update - b) > 1e-10);
   return b;
 }
 
 colvec Fit::l2grad(mat x, colvec y, colvec b) {
-  return (x.t() / x.n_rows) * (y - (x * b));
+  colvec eta = x * b;
+  colvec resid = y - eta;
+  return (x.t() / x.n_rows) * (resid);
 }
 double Fit::l2loss(mat x, colvec y, colvec b) {
   double n = x.n_rows;
-  return (1 / n) * norm(y - x * b, 2) * norm(y - x * b, 2);
+  colvec eta = x * b;
+  colvec resid = y - eta;
+  return (1 / n) * norm(resid, 2) * norm(resid, 2);
 }
-colvec Fit::loggrad(mat x, colvec y, colvec b) {}
+colvec Fit::loggrad(mat x, colvec y, colvec b) {
+  double n = x.n_rows;
+  colvec ones;
+  ones = colvec(n, 1);
+  ones.ones();
 
-double Fit::logloss(mat x, colvec y, colvec b) {}
+  colvec expeta = exp(x * b);
+
+  return (-1 * x.t() / n) * (expeta / (ones + expeta) - y);
+}
+
+double Fit::logloss(mat x, colvec y, colvec b) {
+  double n = x.n_rows;
+  colvec ones;
+  ones = colvec(n, 1);
+  double loss = 0;
+  colvec eta = x * b;
+  loss = as_scalar(ones.t() * log(ones + exp(eta)) - y.t() * (eta));
+  return loss;
+}
 
 /// @brief Backtracking line search step iteration.
 ///@param[in] x
@@ -85,8 +107,7 @@ colvec Fit::fit(mat x, colvec y, colvec b, double lambda) {
     loss = logloss(x, y, b);
     do {
       t *= .5;
-      bnew = Fit::soft_threshold(b + (t)*grad, t * lambda);
-
+      bnew = Fit::soft_threshold(b + t * grad, t * lambda);
       prox = loss + as_scalar(grad.t() * (bnew - b)) +
              (1 / (2 * t)) * (norm(bnew - b, 2) * norm(bnew - b, 2));
       actual = logloss(x, y, bnew);
@@ -96,7 +117,7 @@ colvec Fit::fit(mat x, colvec y, colvec b, double lambda) {
     double loss = l2loss(x, y, b);
     do {
       t *= .5;
-      bnew = Fit::soft_threshold(b + (t)*grad, t * lambda);
+      bnew = Fit::soft_threshold(b + t * grad, t * lambda);
 
       prox = loss + as_scalar(grad.t() * (bnew - b)) +
              (1 / (2 * t)) * (norm(bnew - b, 2) * norm(bnew - b, 2));

@@ -58,7 +58,7 @@ void CV::IteratePartition() {
                     (partition_counter_ + 1) * (partition_size_)-1);
   // Use fit object to create matrix of beta values for our lambda vector using
   // training data for this partition.
-  mat betamat = opt.l2ggd(train_x, train_y, lambda_);
+  mat betamat = opt.ggd(train_x, train_y, lambda_);
   // Get estimates for y values.
   betamat = betamat * test_x.t();
   // Fill results matrix with MSE for each lambda value.
@@ -74,6 +74,7 @@ void CV::IteratePartition() {
 void CV::PartitionCycle() {
   while (partition_counter_ < k_) {
     IteratePartition();
+    cout << "Partition " << partition_counter_ << " complete." << endl;
   }
 }
 

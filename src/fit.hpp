@@ -12,9 +12,7 @@ class Fit {
   Fit(){};
   std::string loss_type_;
   void SetParams(std::string loss_type);
-  mat l2ggd(mat x, colvec y, colvec b, colvec lambda);
-  colvec l2ggd(mat x, colvec y, colvec b, double lambda);
-  mat l2ggd(mat x, colvec y, colvec lambda);
+  mat ggd(mat x, colvec y, colvec lambda);
   colvec ggd(mat x, colvec y, double lambda);
   colvec soft_threshold(colvec x, double lambda);
   colvec fit(mat x, colvec y, colvec b, double lambda);
